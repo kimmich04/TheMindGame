@@ -11,6 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.scene.image.*;
 import game.Game;
 import players.HumanPlayer;
 import players.Player;
@@ -22,6 +23,7 @@ public class GameClient extends Application {
     private double centerX;
     private double centerY;
     private HumanPlayer humanPlayer; // Declare HumanPlayer variable
+    private Circle playerCircle;
 
     @Override
     public void start(Stage primaryStage) {
@@ -49,6 +51,8 @@ public class GameClient extends Application {
 
         Scene scene = new Scene(root, 1500, 900);
         primaryStage.setTitle("The Mind Game Client");
+        Image icon = new Image(getClass().getResource("/images/TheMind_Logo.png").toString());
+        primaryStage.getIcons().add(icon);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -57,7 +61,6 @@ public class GameClient extends Application {
         game = new Game(numPlayers);
         game.startLevel();
         drawGameTable_Players(numPlayers);
-        //drawPlayersCard();
         updateLevelDisplay();
     }
 
@@ -65,7 +68,6 @@ public class GameClient extends Application {
         game.nextLevel();
         game.startLevel();
         drawGameTable_Players(game.getPlayers().size());
-        //drawPlayersCard();
         updateLevelDisplay();
     }
 
@@ -87,85 +89,57 @@ public class GameClient extends Application {
         double radius = 320.0;
 
         for (int playerIndex = 1; playerIndex <= numPlayers; ++playerIndex) {
-            Circle playerCircle = new Circle(20, Color.GREY);
-            HumanPlayer humanPlayer = game.getHumanPlayer();
+            playerCircle = new Circle(20, Color.GREY);
+            humanPlayer = game.getHumanPlayer();
             int numCards = humanPlayer.getHand().size();
             double totalWidth = numCards * 35 - 5; // Width occupied by all cards, assuming 35 pixels per card with 5 pixels spacing
 
             if (playerIndex == 1) {
-                playerCircle.setCenterX(centerX);
-                playerCircle.setCenterY(centerY + (radius + 20));
-                gameTable.getChildren().addAll(playerCircle);
-                // humanPlayerCircle = playerCircle;
-
-                for (int i = 0; i < numCards; ++i) {
-                    Rectangle cardRect = new Rectangle(30, 50, Color.LIGHTGREY);
-                    cardRect.setStroke(Color.BLACK);
-                    cardRect.setX(centerX - totalWidth / 2 + i * 35); // Center the cards
-                    cardRect.setY(playerCircle.getCenterY() - 170);
-                    Label cardLabel = new Label(humanPlayer.getHand().get(i).toString());
-                    cardLabel.setLayoutX(cardRect.getX() + 10);
-                    cardLabel.setLayoutY(cardRect.getY() + 15);
-                    gameTable.getChildren().addAll(cardRect, cardLabel);
-                }
+                //player
+                drawPlayers(centerX, centerY + (radius + 20));
+                for (int i = 0; i < numCards; ++i)
+                    drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() - 170, "player", i);                    
             } 
             else if (playerIndex == 2) {
-                playerCircle.setCenterX(centerX);
-                playerCircle.setCenterY(centerY - (radius + 20));
-                gameTable.getChildren().addAll(playerCircle);
-
-                for (int i = 0; i < numCards; ++i) {
-                    Rectangle cardRect = new Rectangle(30, 50, Color.LIGHTGREY);
-                    cardRect.setStroke(Color.BLACK);
-                    cardRect.setX(centerX - totalWidth / 2 + i * 35); // Center the cards
-                    cardRect.setY(playerCircle.getCenterY() + 120);
-                    gameTable.getChildren().addAll(cardRect);
-                }
+                drawPlayers(centerX, centerY - (radius + 20));
+                for (int i = 0; i < numCards; ++i) 
+                    drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() + 120, "bot", i);
             } 
             else if (playerIndex == 3) {
-                playerCircle.setCenterX(centerX - (radius + 250));
-                playerCircle.setCenterY(centerY);
-                gameTable.getChildren().addAll(playerCircle);
-
-                for (int i = 0; i < numCards; ++i) {
-                    Rectangle cardRect = new Rectangle(50, 30, Color.LIGHTGREY);
-                    cardRect.setStroke(Color.BLACK);
-                    cardRect.setX(playerCircle.getCenterX() + 150); // Center the cards
-                    cardRect.setY(centerY - totalWidth / 2 + i * 35);
-                    gameTable.getChildren().addAll(cardRect);
-                }
+                drawPlayers(centerX - (radius + 250), centerY);
+                for (int i = 0; i < numCards; ++i) 
+                    drawPlayersCard(50, 30, playerCircle.getCenterX() + 150, centerY - totalWidth / 2 + i * 35, "bot", i);
             } 
             else {
-                playerCircle.setCenterX(centerX + (radius + 250));
-                playerCircle.setCenterY(centerY);
-                gameTable.getChildren().addAll(playerCircle);
-
-                for (int i = 0; i < numCards; ++i) {
-                    Rectangle cardRect = new Rectangle(50, 30, Color.LIGHTGREY);
-                    cardRect.setStroke(Color.BLACK);
-                    cardRect.setX(playerCircle.getCenterX() - 200); // Center the cards
-                    cardRect.setY(centerY - totalWidth / 2 + i * 35);
-                    gameTable.getChildren().addAll(cardRect);
-                }
+                drawPlayers(centerX + (radius + 250), centerY);
+                for (int i = 0; i < numCards; ++i) 
+                    drawPlayersCard(50, 30, playerCircle.getCenterX() - 200, centerY - totalWidth / 2 + i * 35, "bot", i);
             }
         }
     }
 
-    // private void drawPlayersCard() {
-    //     int numCards = humanPlayer.getHand().size();
-    //     double totalWidth = numCards * 35 - 5; // Width occupied by all cards, assuming 35 pixels per card with 5 pixels spacing
+    private void drawPlayers(double circleX, double circleY) {
+        playerCircle.setCenterX(circleX);
+        playerCircle.setCenterY(circleY);
+        gameTable.getChildren().addAll(playerCircle);
+    }
 
-    //     for (int i = 0; i < numCards; ++i) {
-    //         Rectangle cardRect = new Rectangle(30, 50, Color.WHITE);
-    //         cardRect.setStroke(Color.BLACK);
-    //         cardRect.setX(centerX - totalWidth / 2 + i * 35); // Center the cards
-    //         cardRect.setY(humanPlayerCircle.getCenterY() - 170);
-    //         Label cardLabel = new Label(humanPlayer.getHand().get(i).toString());
-    //         cardLabel.setLayoutX(cardRect.getX() + 10);
-    //         cardLabel.setLayoutY(cardRect.getY() + 15);
-    //         gameTable.getChildren().addAll(cardRect, cardLabel);
-    //     }
-    // }
+    private void drawPlayersCard(int RecX, int RecY, double X, double Y, String S, int i) {
+        Rectangle cardRect = new Rectangle(RecX, RecY, Color.LIGHTGREY);
+        cardRect.setStroke(Color.BLACK);
+        // Center the cards
+        cardRect.setX(X); 
+        cardRect.setY(Y);
+
+        if (S == "bot")
+            gameTable.getChildren().addAll(cardRect);
+        else {
+            Label cardLabel = new Label(humanPlayer.getHand().get(i).toString());
+            cardLabel.setLayoutX(cardRect.getX() + 10);
+            cardLabel.setLayoutY(cardRect.getY() + 15);
+            gameTable.getChildren().addAll(cardRect, cardLabel);
+        }
+    }
 
     public static void main(String[] args) {
         launch(args);
