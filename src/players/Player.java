@@ -32,6 +32,10 @@ public abstract class Player {
     public String getName() {
         return name;
     }
-
+    
+    public void setHand(List<Integer> hand) {
+        this.hand = hand;
+    }
+    
     public abstract void playCard();
 }

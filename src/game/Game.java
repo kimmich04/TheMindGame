@@ -26,15 +26,25 @@ public class Game {
     }
 
     private void dealCards(int numCards) {
+        int totalCards = 100; // Total number of unique cards (1 to 100)
+        boolean[] dealtCards = new boolean[totalCards + 1]; // Array to mark dealt cards
         Random rand = new Random();
+    
         for (Player player : players) {
             player.clearHand();
             for (int i = 0; i < numCards; i++) {
-                player.addCard(rand.nextInt(100) + 1);
+                int card;
+                do {
+                    card = rand.nextInt(100) + 1;
+                } while (dealtCards[card]); // Repeat if the card is already dealt
+    
+                dealtCards[card] = true; // Mark the card as dealt
+                player.addCard(card);
             }
             player.sortHand();
         }
     }
+    
 
     public int getCurrentLevel() {
         return currentLevel;

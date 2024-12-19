@@ -7,6 +7,5 @@ public class HumanPlayer extends Player {
 
     @Override
     public void playCard() {
-        System.out.println(name + "'s turn: " + hand);
     }
 }
