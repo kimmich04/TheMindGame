@@ -247,6 +247,7 @@ public class GameClient extends Application {
                     Integer cardToPlay = ((BotPlayer) currentPlayer).playCardAfter(lastPlayedCard);
                     lastPlayedCard = cardToPlay;
                     displayPlayedCard(cardToPlay); // Display bot's card in center of table
+                    //next level
                     if (checkLevelComplete()) {
                         System.out.println("Level complete");
                         nextLevelButton.setVisible(true); // Show the "Next Level" button
