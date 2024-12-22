@@ -5,20 +5,26 @@ import players.HumanPlayer;
 import players.Player;
 import java.util.*;
 
+import javafx.scene.control.Button;
+
 public class Game {
     private List<Player> players;
     private int currentLevel;
 
-    public Game(int numPlayers) {
+    private Button nextLevelButton;
+
+    public Game(int numPlayers, Button nextLevelButton) {
         players = new ArrayList<>();
         players.add(new HumanPlayer("Player"));
         for (int i = 0; i < numPlayers - 1; i++) {
             players.add(new BotPlayer("Bot " + (i + 1)));
         }
         currentLevel = 1;
+        this.nextLevelButton = nextLevelButton;
     }
 
     public void startLevel() {
+        nextLevelButton.setVisible(false);
         dealCards(currentLevel);
         for (Player player : players) {
             player.playCard();
