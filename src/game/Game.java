@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 public class Game {
     private List<Player> players;
     private int currentLevel;
+    private int maxLevel;
 
     private Button nextLevelButton;
 
@@ -21,6 +22,15 @@ public class Game {
         }
         currentLevel = 1;
         this.nextLevelButton = nextLevelButton;
+
+         // Set the maximum level based on the number of players
+         if (numPlayers == 2) {
+            maxLevel = 12;
+        } else if (numPlayers == 3) {
+            maxLevel = 10;
+        } else if (numPlayers == 4) {
+            maxLevel = 8;
+        }
     }
 
     public void startLevel() {
@@ -57,7 +67,12 @@ public class Game {
     }
 
     public void nextLevel() {
-        currentLevel++;
+        if (currentLevel < maxLevel) {
+            currentLevel++;
+            startLevel();
+        } else {
+            System.out.println("Game complete! You have finished all levels.");
+        }
     }
 
     public List<Player> getPlayers() {
