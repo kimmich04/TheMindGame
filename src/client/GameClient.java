@@ -41,6 +41,12 @@ public class GameClient extends Application {
     private int currentPlayerIndex;
     private Integer lastPlayedCard;
     private Button nextLevelButton;
+    private Map<Integer, Rectangle> playerCard = new HashMap<>(); // To store card rectangles 
+    private Map<Integer, Label> playerCardLabel = new HashMap<>(); // To store card labels
+    private Map<Integer, Rectangle> bot1Cards = new HashMap<>(); // To store bot1 cards
+    private Map<Integer, Rectangle> bot2Cards = new HashMap<>(); // To store bot2 cards
+    private Map<Integer, Rectangle> bot3Cards = new HashMap<>(); // To store bot3 cards
+    private Map<Integer, Rectangle> botCards = new HashMap<>(); // To store bot cards
 
     @Override
     public void start(Stage primaryStage) {
@@ -130,12 +136,6 @@ public class GameClient extends Application {
     //events------------------------------------------------------------------------------------
 
     //utilities---------------------------------------------------------------------------------
-    private Map<Integer, Rectangle> cardRectangles = new HashMap<>(); // To store card rectangles 
-    private Map<Integer, Label> cardLabels = new HashMap<>(); // To store card labels
-    private Map<Integer, Rectangle> bot1Cards = new HashMap<>(); // To store bot1 cards
-    private Map<Integer, Rectangle> bot2Cards = new HashMap<>(); // To store bot2 cards
-    private Map<Integer, Rectangle> bot3Cards = new HashMap<>(); // To store bot3 cards
-
     private void drawGameTableAndPlayer(int numPlayers) {
         // Draw table
         double rectangleWidth = 900;
@@ -149,35 +149,37 @@ public class GameClient extends Application {
         centerY = 900 / 2;
         double radius = 320.0;
     
-        for (int playerIndex = 1; playerIndex <= numPlayers; ++playerIndex) {
+        for (int playerIndex = 0; playerIndex < numPlayers; ++playerIndex) {
+            Player currentPlayer = game.getPlayers().get(playerIndex);
             playerCircle = new Circle(20, Color.GREY);
-            humanPlayer = game.getHumanPlayer();
-            int numCards = humanPlayer.getHand().size();
+            int numCards = currentPlayer.getHand().size();
             double totalWidth = numCards * 35 - 5; // Width occupied by all cards, assuming 35 pixels per card with 5 pixels spacing
     
-            if (playerIndex == 1) {
+            if (currentPlayer instanceof HumanPlayer) {
                 // Player
                 drawPlayers(centerX, centerY + (radius + 20));
-                for (int i = 0; i < numCards; ++i)
-                    drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() - 170, "player", i);                    
-            } 
-            else if (playerIndex == 2) {
+                for (int i = 0; i < numCards; ++i) {
+                    drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() - 170, "player", i, currentPlayer);
+                }
+            } else if (playerIndex == 1) {
                 drawPlayers(centerX, centerY - (radius + 20));
-                for (int i = 0; i < numCards; ++i) 
-                    drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() + 120, "bot", i);
-            } 
-            else if (playerIndex == 3) {
+                for (int i = 0; i < numCards; ++i) {
+                    drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() + 120, "bot", i, currentPlayer);
+                }
+            } else if (playerIndex == 2) {
                 drawPlayers(centerX - (radius + 250), centerY);
-                for (int i = 0; i < numCards; ++i) 
-                    drawPlayersCard(50, 30, playerCircle.getCenterX() + 150, centerY - totalWidth / 2 + i * 35, "bot", i);
-            } 
-            else {
+                for (int i = 0; i < numCards; ++i) {
+                    drawPlayersCard(50, 30, playerCircle.getCenterX() + 150, centerY - totalWidth / 2 + i * 35, "bot", i, currentPlayer);
+                }
+            } else if (playerIndex == 3) {
                 drawPlayers(centerX + (radius + 250), centerY);
-                for (int i = 0; i < numCards; ++i) 
-                    drawPlayersCard(50, 30, playerCircle.getCenterX() - 200, centerY - totalWidth / 2 + i * 35, "bot", i);
+                for (int i = 0; i < numCards; ++i) {
+                    drawPlayersCard(50, 30, playerCircle.getCenterX() - 200, centerY - totalWidth / 2 + i * 35, "bot", i, currentPlayer);
+                }
             }
         }
     }
+    
     
     private void drawPlayers(double circleX, double circleY) {
         playerCircle.setCenterX(circleX);
@@ -185,37 +187,49 @@ public class GameClient extends Application {
         gameTable.getChildren().addAll(playerCircle);
     }
     
-    private void drawPlayersCard(int cardX, int cardY, double centerX, double centerY, String category, int card_ith) {
+    private void drawPlayersCard(int cardX, int cardY, double centerX, double centerY, String category, int card_ith, Player currentPlayer) {
         Rectangle cardRect = new Rectangle(cardX, cardY, Color.LIGHTGREY);
         cardRect.setStroke(Color.BLACK);
         // Center the cards
         cardRect.setX(centerX); 
         cardRect.setY(centerY);
     
+        Integer cardValue = currentPlayer.getHand().get(card_ith);
+    
         if (category.equals("bot")) {
-            gameTable.getChildren().addAll(cardRect);
+            gameTable.getChildren().add(cardRect);
+            botCards.put(cardValue, cardRect);
         } else {
-            Label cardLabel = new Label(humanPlayer.getHand().get(card_ith).toString());
+            Label cardLabel = new Label(cardValue.toString());
             cardLabel.setLayoutX(cardRect.getX() + 10);
             cardLabel.setLayoutY(cardRect.getY() + 15);
             gameTable.getChildren().addAll(cardRect, cardLabel);
             // Save the coordinates of the player's cards
-            cardRectangles.put(humanPlayer.getHand().get(card_ith), cardRect);
-            cardLabels.put(humanPlayer.getHand().get(card_ith), cardLabel);
+            playerCard.put(cardValue, cardRect);
+            playerCardLabel.put(cardValue, cardLabel);
         }
     }
+    
 
     //remove cards from displayed hands
     private void removePlayerCard(int card) {
-        if (cardRectangles.containsKey(card) && cardLabels.containsKey(card)) {
-            Rectangle cardRect = cardRectangles.get(card);
-            Label cardLabel = cardLabels.get(card);
+        if (playerCard.containsKey(card) && playerCardLabel.containsKey(card)) { 
+            Rectangle cardRect = playerCard.get(card);
+            Label cardLabel = playerCardLabel.get(card);
             gameTable.getChildren().removeAll(cardRect, cardLabel);
-            cardRectangles.remove(card);
-            cardLabels.remove(card);
+            playerCard.remove(card);
+            playerCardLabel.remove(card);
         }
     }    
     
+    private void removeBotCard(int card) {
+        if (botCards.containsKey(card)) {
+            Rectangle cardRect = botCards.get(card);
+            gameTable.getChildren().remove(cardRect);
+            botCards.remove(card);
+        }
+    } 
+
     private void updateLevelDisplay() {
         levelLabel.setText("Level: " + game.getCurrentLevel());
     }
@@ -246,52 +260,56 @@ public class GameClient extends Application {
     }
 
     private void proceedToNextTurn() {
-        if (currentPlayerIndex == 0) {
-            // Your turn ends, find the next bot's move
-            sortBotsByNextPlayableCard();
-        }
-    
-        // Move to the next player
-        currentPlayerIndex = (currentPlayerIndex + 1) % game.getPlayers().size();
-    
-        if (checkLevelComplete()) {
-            System.out.println("Level complete");
-            nextLevelButton.setVisible(true); // Show the "Next Level" button
-            return; // Level complete, exit the method
-        }
-    
-        if (humanPlayer.getHand().isEmpty()) {
-            new Timeline(new KeyFrame(Duration.seconds(3), e -> continueBotTurns())).play();
-            return;
-        }
-    
-        if (currentPlayerIndex == 0) {
+    if (currentPlayerIndex == 0) {
+        // Your turn ends, find the next bot's move
+        sortBotsByNextPlayableCard();
+    }
+
+    // Move to the next player
+    currentPlayerIndex = (currentPlayerIndex + 1) % game.getPlayers().size();
+
+    if (checkLevelComplete()) {
+        System.out.println("Level complete");
+        nextLevelButton.setVisible(true); // Show the "Next Level" button
+        return; // Level complete, exit the method
+    }
+
+    if (humanPlayer.getHand().isEmpty()) {
+        //Automatically playing when player has no card left
+        new Timeline(new KeyFrame(Duration.seconds(3), e -> continueBotTurns())).play();
+        return;
+    }
+
+    if (currentPlayerIndex == 0) {
+        System.out.println("Your turn! Current hand: " + humanPlayer.getHand());
+    } else {
+        Player currentPlayer = game.getPlayers().get(currentPlayerIndex);
+        if (currentPlayer instanceof HumanPlayer) {
             System.out.println("Your turn! Current hand: " + humanPlayer.getHand());
         } else {
-            Player currentPlayer = game.getPlayers().get(currentPlayerIndex);
-            if (currentPlayer instanceof HumanPlayer) {
+            Timeline botTurnTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> {
+                Integer cardToPlay = ((BotPlayer) currentPlayer).playCardAfter(lastPlayedCard);
+                lastPlayedCard = cardToPlay;
+
+                removeBotCard(cardToPlay);
+                displayPlayedCard(cardToPlay); // Display bot's card in center of table
+
+                if (checkLevelComplete()) {
+                    System.out.println("Level complete");
+                    nextLevelButton.setVisible(true); // Show the "Next Level" button
+                    return; // Level complete, exit the method
+                }
+
+                // Return turn to human player after each bot move
+                currentPlayerIndex = 0;
                 System.out.println("Your turn! Current hand: " + humanPlayer.getHand());
-            } else {
-                Timeline botTurnTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> {
-                    Integer cardToPlay = ((BotPlayer) currentPlayer).playCardAfter(lastPlayedCard);
-                    lastPlayedCard = cardToPlay;
-                    displayPlayedCard(cardToPlay); // Display bot's card in center of table
-    
-                    if (checkLevelComplete()) {
-                        System.out.println("Level complete");
-                        nextLevelButton.setVisible(true); // Show the "Next Level" button
-                        return; // Level complete, exit the method
-                    }
-    
-                    // Return turn to human player after each bot move
-                    currentPlayerIndex = 0;
-                    System.out.println("Your turn! Current hand: " + humanPlayer.getHand());
-                }));
-                botTurnTimeline.setCycleCount(1);
-                botTurnTimeline.play();
-            }
+            }));
+            botTurnTimeline.setCycleCount(1);
+            botTurnTimeline.play();
         }
     }
+}
+
     
     private void continueBotTurns() {
         List<Player> bots = game.getPlayers().stream()
@@ -318,6 +336,8 @@ public class GameClient extends Application {
         if (bot instanceof BotPlayer && !bot.getHand().isEmpty()) {
             Integer cardToPlay = ((BotPlayer) bot).playCardAfter(lastPlayedCard);
             lastPlayedCard = cardToPlay;
+
+            removeBotCard(cardToPlay);
             displayPlayedCard(cardToPlay); // Display bot's card in center of table
         }
     
