@@ -11,7 +11,7 @@ public class Game {
     private List<Player> players;
     private int currentLevel;
     private int maxLevel;
-
+    private int lives; // Track lives
     private Button nextLevelButton;
 
     public Game(int numPlayers, Button nextLevelButton) {
@@ -21,16 +21,33 @@ public class Game {
             players.add(new BotPlayer("Bot " + (i + 1)));
         }
         currentLevel = 1;
+        lives = 3;
         this.nextLevelButton = nextLevelButton;
 
-         // Set the maximum level based on the number of players
-         if (numPlayers == 2) {
+        // Set the maximum level based on the number of players
+        if (numPlayers == 2) {
             maxLevel = 12;
         } else if (numPlayers == 3) {
             maxLevel = 10;
         } else if (numPlayers == 4) {
             maxLevel = 8;
         }
+
+        lives = 3; // Initialize lives to 3
+    }
+
+    public int getLives() {
+        return lives;
+    }
+
+    public void decreaseLives() {
+        if (lives > 0) {
+            lives--;
+        }
+    }
+
+    public boolean isGameOver() {
+        return lives <= 0;
     }
 
     public void startLevel() {
