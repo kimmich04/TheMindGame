@@ -437,6 +437,11 @@ public class GameClient extends Application {
                 nextLevelButton.setVisible(true);
                 return;
             }
+
+            if (humanPlayer.getHand().isEmpty()) {
+                new Timeline(new KeyFrame(Duration.seconds(3), ev2 -> continueBotTurns())).play();
+                return;
+            }
         }
     
         Timeline botTurnTimeline = new Timeline(new KeyFrame(Duration.seconds(3), ev -> {
@@ -445,7 +450,6 @@ public class GameClient extends Application {
         botTurnTimeline.setCycleCount(1);
         botTurnTimeline.play();
     }
-    
     
     private boolean checkLevelComplete() {
         return game.getPlayers().stream().allMatch(player -> player.getHand().isEmpty());
