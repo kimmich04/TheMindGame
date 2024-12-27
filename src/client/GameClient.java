@@ -44,7 +44,10 @@ public class GameClient extends Application {
     private Map<Integer, Rectangle> playerCard = new HashMap<>(); // To store card rectangles 
     private Map<Integer, Label> playerCardLabel = new HashMap<>(); // To store card labels
     private Map<Integer, Rectangle> botCards = new HashMap<>(); // To store bot cards
+    private Map<Integer, Label> revealedCardLabels = new HashMap<>(); // Store labels for easy removal
     private Label livesLabel;
+    private Button throwingStarButton; // Button for throwing star
+    private Label throwingStarsLabel; // Label to display throwing stars
 
     @Override
     public void start(Stage primaryStage) {
@@ -82,7 +85,14 @@ public class GameClient extends Application {
 
         // Add components to the stage
         levelLabel = new Label();
-        root.getChildren().addAll(playerSelect, startButton, nextLevelButton, cardSelectComboBox, playCardButton, skipTurnButton, levelLabel, livesLabel, gameTable);
+
+        // Initialize throwing star button
+        throwingStarButton = new Button("Throwing Star");
+        throwingStarButton.setOnAction(e -> useThrowingStar());
+
+        // Initialize throwing stars label
+        throwingStarsLabel = new Label("Throwing Stars: 3");
+        root.getChildren().addAll(playerSelect, startButton, nextLevelButton, cardSelectComboBox, playCardButton, skipTurnButton, levelLabel, livesLabel, throwingStarButton, throwingStarsLabel, gameTable);
 
         Scene scene = new Scene(root, 1500, 900);
         primaryStage.setTitle("The Mind Game");
@@ -93,7 +103,7 @@ public class GameClient extends Application {
     }
 
 
-    //events------------------------------------------------------------------------------------
+    //EVENTS------------------------------------------------------------------------------------
     private void startGame(int numPlayers) {
         game = new Game(numPlayers, nextLevelButton);
         game.startLevel();
@@ -143,9 +153,20 @@ public class GameClient extends Application {
         System.out.println("Skipping turn!");
         proceedToNextTurn();
     }
-    //events------------------------------------------------------------------------------------
 
-    //utilities---------------------------------------------------------------------------------
+    private void useThrowingStar() {
+        if (game.useThrowingStar()) {
+            revealSmallestCards();
+            updateThrowingStarsDisplay();
+        } else {
+            System.out.println("No throwing stars left!");
+        }
+    }    
+    //EVENTS------------------------------------------------------------------------------------
+
+    //UTILITIES---------------------------------------------------------------------------------
+    
+    //DRAWING----------------------------------------------------------------------------------------------------------------------------------------------------------
     private void drawGameTableAndPlayer(int numPlayers) {
         // Draw table
         double rectangleWidth = 900;
@@ -171,17 +192,20 @@ public class GameClient extends Application {
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() - 170, "player", i, currentPlayer);
                 }
-            } else if (playerIndex == 1) {
+            } 
+            else if (playerIndex == 1) {
                 drawPlayers(centerX, centerY - (radius + 20));
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() + 120, "bot", i, currentPlayer);
                 }
-            } else if (playerIndex == 2) {
+            } 
+            else if (playerIndex == 2) {
                 drawPlayers(centerX - (radius + 250), centerY);
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(50, 30, playerCircle.getCenterX() + 150, centerY - totalWidth / 2 + i * 35, "bot", i, currentPlayer);
                 }
-            } else if (playerIndex == 3) {
+            }
+            else if (playerIndex == 3) {
                 drawPlayers(centerX + (radius + 250), centerY);
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(50, 30, playerCircle.getCenterX() - 200, centerY - totalWidth / 2 + i * 35, "bot", i, currentPlayer);
@@ -207,8 +231,10 @@ public class GameClient extends Application {
     
         if (category.equals("bot")) {
             gameTable.getChildren().add(cardRect);
+            //Save coordinates of the bots's cards
             botCards.put(cardValue, cardRect);
-        } else {
+        } 
+        else {
             Label cardLabel = new Label(cardValue.toString());
             cardLabel.setLayoutX(cardRect.getX() + 10);
             cardLabel.setLayoutY(cardRect.getY() + 15);
@@ -218,8 +244,10 @@ public class GameClient extends Application {
             playerCardLabel.put(cardValue, cardLabel);
         }
     }
+    //DRAWING----------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    //remove cards from displayed hands
+    //REMOVING----------------------------------------------------------------------------------------------------------------
+    //Removing player's displayed cards
     private void removePlayerCard(int card) {
         if (playerCard.containsKey(card) && playerCardLabel.containsKey(card)) { 
             Rectangle cardRect = playerCard.get(card);
@@ -230,29 +258,64 @@ public class GameClient extends Application {
         }
     }    
     
+    //removing bots's displayed cards
     private void removeBotCard(int card) {
         if (botCards.containsKey(card)) {
             Rectangle cardRect = botCards.get(card);
             gameTable.getChildren().remove(cardRect);
             botCards.remove(card);
-        }
-    } 
-
-    private void removeSmallerCardsAndDisplay(Integer cardToPlay) {
-        List<Integer> smallerCards = humanPlayer.getHand().stream()
-                                                 .filter(card -> card < cardToPlay)
-                                                 .collect(Collectors.toList());
     
-        // Remove smaller cards from the player's hand and displayed screen
-        for (Integer card : smallerCards) {
-            humanPlayer.getHand().remove(card);
-            removePlayerCard(card);
+            // Remove the label if it exists
+            if (revealedCardLabels.containsKey(card)) {
+                Label cardLabel = revealedCardLabels.get(card);
+                gameTable.getChildren().remove(cardLabel);
+                revealedCardLabels.remove(card);
+            }
         }
-    
-        System.out.println("Removed smaller cards: " + smallerCards);
-        updateCardSelection();
     }
 
+    //checking is there any card smaller than played card
+    private boolean removeAllSmallerCards(Integer cardToPlay) {
+        boolean smallerCardsExist = false;
+    
+        // Check and remove smaller cards from the human player's hand
+        List<Integer> smallerPlayerCards = humanPlayer.getHand().stream()
+            .filter(card -> card < cardToPlay)
+            .collect(Collectors.toList());
+    
+        if (!smallerPlayerCards.isEmpty()) {
+            smallerCardsExist = true;
+            for (Integer card : smallerPlayerCards) {
+                humanPlayer.getHand().remove(card);
+                removePlayerCard(card);
+            }
+            System.out.println("Removed smaller cards from player: " + smallerPlayerCards);
+        }
+    
+        // Check and remove smaller cards from bots' hands
+        for (Player player : game.getPlayers()) {
+            if (player instanceof BotPlayer) {
+                List<Integer> smallerBotCards = player.getHand().stream()
+                    .filter(card -> card < cardToPlay)
+                    .collect(Collectors.toList());
+    
+                if (!smallerBotCards.isEmpty()) {
+                    smallerCardsExist = true;
+                    for (Integer card : smallerBotCards) {
+                        player.getHand().remove(card);
+                        removeBotCard(card);
+                    }
+                    System.out.println("Removed smaller cards from " + player.getName() + ": " + smallerBotCards);
+                }
+            }
+        }
+    
+        updateCardSelection();
+        return smallerCardsExist;
+    }
+    //REMOVING----------------------------------------------------------------------------------------------------------------
+
+    //UPDATING-----------------------------------------------------------
     private void updateLevelDisplay() {
         levelLabel.setText("Level: " + game.getCurrentLevel());
     }
@@ -267,7 +330,13 @@ public class GameClient extends Application {
         if (humanPlayer != null)
             cardSelectComboBox.getItems().addAll(humanPlayer.getHand());
     }
-    
+
+    private void updateThrowingStarsDisplay() {
+        throwingStarsLabel.setText("Throwing Stars: " + game.getThrowingStars());
+    }    
+    //UPDATING-----------------------------------------------------------
+
+    //DISPLAYING---------------------------------------------------------------------------------
     private void displayHands() {
         for (Player player : game.getPlayers()) 
             System.out.println(player.getName() + "'s hand: " + player.getHand());
@@ -285,6 +354,50 @@ public class GameClient extends Application {
     
         gameTable.getChildren().addAll(cardRect, cardLabel);
     }
+
+    private void revealSmallestCards() {
+        for (Player player : game.getPlayers())
+            if (player instanceof BotPlayer) {
+                List<Integer> hand = player.getHand();
+                if (!hand.isEmpty()) {
+                    Integer smallestCard = Collections.min(hand);
+                    revealCardNumberAtPosition(smallestCard, player);
+                }
+            }
+    }
+    
+    private void revealCardNumberAtPosition(Integer cardValue, Player player) {
+        // Find the index of the card in the bot's hand
+        int cardIndex = player.getHand().indexOf(cardValue);
+    
+        // Retrieve the corresponding rectangle
+        Rectangle cardRect = botCards.get(cardValue);
+    
+        // Create a label to display the card value
+        Label cardLabel = new Label(cardValue.toString());
+    
+        // Rotate labels for Bot 2 (left) and Bot 3 (right)
+        if (game.getPlayers().indexOf(player) == 2) { // Assuming Bot 2 is the leftmost bot
+            cardLabel.setRotate(90); // Rotate 90 degrees counterclockwise
+            cardLabel.setLayoutX(cardRect.getX() + 20);
+            cardLabel.setLayoutY(cardRect.getY() + 5);
+        } else if (game.getPlayers().indexOf(player) == 3) { // Assuming Bot 3 is the rightmost bot
+            cardLabel.setRotate(-90); // Rotate 90 degrees clockwise
+            cardLabel.setLayoutX(cardRect.getX() + 15);
+            cardLabel.setLayoutY(cardRect.getY() + 5);
+        } else {
+            cardLabel.setRotate(0); // No rotation for other players
+            cardLabel.setLayoutX(cardRect.getX() + 10);
+            cardLabel.setLayoutY(cardRect.getY() + 15);
+        }
+    
+        // Add the label to the game table and store it in the map
+        gameTable.getChildren().add(cardLabel);
+        revealedCardLabels.put(cardValue, cardLabel);
+    }
+    
+    //DISPLAYING---------------------------------------------------------------------------------
+
 
     private void proceedToNextTurn() {
         if (currentPlayerIndex == 0) {
@@ -352,45 +465,6 @@ public class GameClient extends Application {
         }
     }    
     
-    private boolean removeAllSmallerCards(Integer cardToPlay) {
-        boolean smallerCardsExist = false;
-    
-        // Check and remove smaller cards from the human player's hand
-        List<Integer> smallerPlayerCards = humanPlayer.getHand().stream()
-            .filter(card -> card < cardToPlay)
-            .collect(Collectors.toList());
-    
-        if (!smallerPlayerCards.isEmpty()) {
-            smallerCardsExist = true;
-            for (Integer card : smallerPlayerCards) {
-                humanPlayer.getHand().remove(card);
-                removePlayerCard(card);
-            }
-            System.out.println("Removed smaller cards from player: " + smallerPlayerCards);
-        }
-    
-        // Check and remove smaller cards from bots' hands
-        for (Player player : game.getPlayers()) {
-            if (player instanceof BotPlayer) {
-                List<Integer> smallerBotCards = player.getHand().stream()
-                    .filter(card -> card < cardToPlay)
-                    .collect(Collectors.toList());
-    
-                if (!smallerBotCards.isEmpty()) {
-                    smallerCardsExist = true;
-                    for (Integer card : smallerBotCards) {
-                        player.getHand().remove(card);
-                        removeBotCard(card);
-                    }
-                    System.out.println("Removed smaller cards from " + player.getName() + ": " + smallerBotCards);
-                }
-            }
-        }
-    
-        updateCardSelection();
-        return smallerCardsExist;
-    }
-    
     private void continueBotTurns() {
         List<Player> bots = game.getPlayers().stream()
             .filter(player -> player instanceof BotPlayer)
@@ -420,9 +494,9 @@ public class GameClient extends Application {
             displayPlayedCard(cardToPlay); // Display bot's card in center of table
     
             // Check if the human player has a smaller card in their hand and deduct a life
-            if (humanPlayer.getHand().stream().anyMatch(card -> card < cardToPlay)) {
+            boolean smallerCardsExist = removeAllSmallerCards(cardToPlay);
+            if (smallerCardsExist) {
                 game.decreaseLives();
-                removeSmallerCardsAndDisplay(cardToPlay);
                 System.out.println("You lost a life! Lives remaining: " + game.getLives());
                 updateLivesDisplay();
             }
@@ -465,7 +539,7 @@ public class GameClient extends Application {
             return 0;
         });
     }
-    //utilities---------------------------------------------------------------------------------
+    //ULTILITIES---------------------------------------------------------------------------------
 
     public static void main(String[] args) {
         launch(args);

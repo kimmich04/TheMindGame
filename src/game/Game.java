@@ -11,7 +11,9 @@ public class Game {
     private List<Player> players;
     private int currentLevel;
     private int maxLevel;
-    private int lives; // Track lives
+    private int lives;
+    private int throwingStars; // Track throwing stars
+
     private Button nextLevelButton;
 
     public Game(int numPlayers, Button nextLevelButton) {
@@ -21,10 +23,8 @@ public class Game {
             players.add(new BotPlayer("Bot " + (i + 1)));
         }
         currentLevel = 1;
-        lives = 3;
         this.nextLevelButton = nextLevelButton;
 
-        // Set the maximum level based on the number of players
         if (numPlayers == 2) {
             maxLevel = 12;
         } else if (numPlayers == 3) {
@@ -33,17 +33,30 @@ public class Game {
             maxLevel = 8;
         }
 
-        lives = 3; // Initialize lives to 3
+        lives = 3;
+        throwingStars = 3; // Initialize throwing stars to 3
     }
 
     public int getLives() {
         return lives;
     }
 
+    public int getThrowingStars() {
+        return throwingStars;
+    }
+
     public void decreaseLives() {
         if (lives > 0) {
             lives--;
         }
+    }
+
+    public boolean useThrowingStar() {
+        if (throwingStars > 0) {
+            throwingStars--;
+            return true;
+        }
+        return false;
     }
 
     public boolean isGameOver() {
@@ -87,7 +100,8 @@ public class Game {
         if (currentLevel < maxLevel) {
             currentLevel++;
             startLevel();
-        } else {
+        } 
+        else {
             System.out.println("Game complete! You have finished all levels.");
         }
     }
