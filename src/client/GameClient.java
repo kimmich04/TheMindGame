@@ -91,7 +91,7 @@ public class GameClient extends Application {
         throwingStarButton.setOnAction(e -> useThrowingStar());
 
         // Initialize throwing stars label
-        throwingStarsLabel = new Label("Throwing Stars: 3");
+        throwingStarsLabel = new Label("Throwing Stars: 1");
         root.getChildren().addAll(playerSelect, startButton, nextLevelButton, cardSelectComboBox, playCardButton, skipTurnButton, levelLabel, livesLabel, throwingStarButton, throwingStarsLabel, gameTable);
 
         Scene scene = new Scene(root, 1500, 900);
@@ -109,6 +109,8 @@ public class GameClient extends Application {
         game.startLevel();
         drawGameTableAndPlayer(numPlayers);
         updateLevelDisplay();
+        updateLivesDisplay();
+        updateThrowingStarsDisplay();
         updateCardSelection();
         currentPlayerIndex = 0; // Start with the player's turn
         lastPlayedCard = 0; // Initialize with the smallest possible card value
@@ -120,6 +122,8 @@ public class GameClient extends Application {
         game.startLevel();
         drawGameTableAndPlayer(game.getPlayers().size());
         updateLevelDisplay();
+        updateLivesDisplay();
+        updateThrowingStarsDisplay();
         updateCardSelection();
         currentPlayerIndex = 0; // Start with the human player
         lastPlayedCard = 0; // Initialize with the smallest possible card value
@@ -145,7 +149,10 @@ public class GameClient extends Application {
             }
     
             updateCardSelection();
-            proceedToNextTurn();
+            
+            if (humanPlayer.getHand().isEmpty()) {
+                new Timeline(new KeyFrame(Duration.seconds(3), evv -> continueBotTurns())).play();
+            }
         }
     }
     
@@ -354,9 +361,9 @@ public class GameClient extends Application {
     
         gameTable.getChildren().addAll(cardRect, cardLabel);
     }
-
+    
     private void revealSmallestCards() {
-        for (Player player : game.getPlayers())
+        for (Player player : game.getPlayers()) {
             if (player instanceof BotPlayer) {
                 List<Integer> hand = player.getHand();
                 if (!hand.isEmpty()) {
@@ -364,6 +371,14 @@ public class GameClient extends Application {
                     revealCardNumberAtPosition(smallestCard, player);
                 }
             }
+        }
+
+         // Remove the card from the player's hand 
+        List <Integer> humanHand = humanPlayer.getHand();
+        if (!humanHand.isEmpty()){
+            Integer smallestHumanCard = Collections.min(humanHand);
+            humanHand.remove(smallestHumanCard);
+        }
     }
     
     private void revealCardNumberAtPosition(Integer cardValue, Player player) {
@@ -394,8 +409,11 @@ public class GameClient extends Application {
         // Add the label to the game table and store it in the map
         gameTable.getChildren().add(cardLabel);
         revealedCardLabels.put(cardValue, cardLabel);
-    }
     
+        // Remove the card from the bots's hand
+        player.getHand().remove(cardValue);
+        botCards.remove(cardValue);
+    }    
     //DISPLAYING---------------------------------------------------------------------------------
 
 

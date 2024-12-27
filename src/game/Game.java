@@ -25,16 +25,15 @@ public class Game {
         currentLevel = 1;
         this.nextLevelButton = nextLevelButton;
 
-        if (numPlayers == 2) {
+        if (numPlayers == 2) 
             maxLevel = 12;
-        } else if (numPlayers == 3) {
+        else if (numPlayers == 3) 
             maxLevel = 10;
-        } else if (numPlayers == 4) {
+        else if (numPlayers == 4) 
             maxLevel = 8;
-        }
 
-        lives = 3;
-        throwingStars = 3; // Initialize throwing stars to 3
+        lives = numPlayers;
+        throwingStars = 1; // Initialize throwing stars to 1
     }
 
     public int getLives() {
@@ -104,6 +103,9 @@ public class Game {
         else {
             System.out.println("Game complete! You have finished all levels.");
         }
+
+        if (currentLevel == 2 || currentLevel == 5 || currentLevel == 8) ++throwingStars;
+        else if (currentLevel == 3 || currentLevel == 6 || currentLevel == 9) ++lives;
     }
 
     public List<Player> getPlayers() {
