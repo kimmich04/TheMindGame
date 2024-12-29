@@ -1,0 +1,15 @@
+.card-hover {
+  -fx-cursor: hand; /* Change the cursor to a pointer */
+}
+
+.card-selected {
+  -fx-translate-y: -10px; /* Move the card up by 10 pixels */
+}
+
+.button-hover {
+  -fx-cursor: hand; /* Change the cursor to a pointer */
+}
+
+.scene-background {
+  -fx-background-color: #A52A2A; /* Red-brown color */
+}

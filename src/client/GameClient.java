@@ -46,62 +46,139 @@ public class GameClient extends Application {
     private Map<Integer, Rectangle> botCards = new HashMap<>(); // To store bot cards
     private Map<Integer, Label> revealedCardLabels = new HashMap<>(); // Store labels for easy removal
     private Label livesLabel;
-    private Button throwingStarButton; // Button for throwing star
-    private Label throwingStarsLabel; // Label to display throwing stars
+    private Button throwingStarButton; 
+    private Label throwingStarsLabel; 
+
+    private Scene startScene, playerSelectScene, gameScene;
+    private Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) {
-        VBox root = new VBox();
+        this.primaryStage = primaryStage;
+        createStartScene();
+        createPlayerSelectScene();
 
-        // Number of players selection
-        ComboBox<Integer> playerSelect = new ComboBox<>();
-        playerSelect.getItems().addAll(2, 3, 4);
-        playerSelect.setValue(2);
-
-        // Start button
-        Button startButton = new Button("Start Game");
-        startButton.setOnAction(e -> startGame(playerSelect.getValue()));
-
-        // Next Level button
-        nextLevelButton = new Button("Next Level");
-        nextLevelButton.setVisible(false); // Initially hidden
-        nextLevelButton.setOnAction(e -> nextLevel());
-
-        livesLabel = new Label("Lives: 3");
-
-        // Play Card button
-        Button playCardButton = new Button("Play Card");
-        playCardButton.setOnAction(e -> playCard());
-
-        // Skip Turn button
-        Button skipTurnButton = new Button("Skip Turn");
-        skipTurnButton.setOnAction(e -> skipTurn());
-
-        // Card selection ComboBox
-        cardSelectComboBox = new ComboBox<>();
-
-        gameTable = new Pane();
-        gameTable.setPrefSize(1300, 700);
-
-        // Add components to the stage
-        levelLabel = new Label();
-
-        // Initialize throwing star button
-        throwingStarButton = new Button("Throwing Star");
-        throwingStarButton.setOnAction(e -> useThrowingStar());
-
-        // Initialize throwing stars label
-        throwingStarsLabel = new Label("Throwing Stars: 1");
-        root.getChildren().addAll(playerSelect, startButton, nextLevelButton, cardSelectComboBox, playCardButton, skipTurnButton, levelLabel, livesLabel, throwingStarButton, throwingStarsLabel, gameTable);
-
-        Scene scene = new Scene(root, 1500, 900);
         primaryStage.setTitle("The Mind Game");
+        primaryStage.setScene(startScene);
         Image icon = new Image(getClass().getResource("/images/TheMind_Logo.png").toString());
         primaryStage.getIcons().add(icon);
-        primaryStage.setScene(scene);
+        primaryStage.getScene().getStylesheets().add(getClass().getResource("/application/styles.css").toExternalForm()); // Apply CSS file
         primaryStage.show();
     }
 
+    private void createStartScene() {
+        VBox startRoot = new VBox(20);
+
+        Button startButton = new Button("Start Game");
+        addHoverStyle(startButton);
+        startButton.setOnAction(e -> primaryStage.setScene(playerSelectScene));
+
+        Button quitButton = new Button("Quit");
+        addHoverStyle(quitButton);
+        quitButton.setOnAction(e -> quitGame());
+
+        startRoot.getChildren().addAll(startButton, quitButton);
+
+        startScene = new Scene(startRoot, 400, 300);
+        addStylesheet(startScene);
+    }
+
+    private void createPlayerSelectScene() {
+        VBox playerSelectRoot = new VBox(20);
+
+        Button twoPlayersButton = new Button("2 Players");
+        addHoverStyle(twoPlayersButton);
+        twoPlayersButton.setOnAction(e -> switchToGameScene(2));
+
+        Button threePlayersButton = new Button("3 Players");
+        addHoverStyle(threePlayersButton);
+        threePlayersButton.setOnAction(e -> switchToGameScene(3));
+
+        Button fourPlayersButton = new Button("4 Players");
+        addHoverStyle(fourPlayersButton);
+        fourPlayersButton.setOnAction(e -> switchToGameScene(4));
+
+        playerSelectRoot.getChildren().addAll(twoPlayersButton, threePlayersButton, fourPlayersButton);
+
+        playerSelectScene = new Scene(playerSelectRoot, 400, 300);
+        addStylesheet(playerSelectScene);
+    }
+
+    private void switchToGameScene(int numPlayers) {
+        createGameScene(numPlayers);
+        primaryStage.setScene(gameScene);
+        primaryStage.setFullScreen(true); // Set the stage to full screen
+        startGame(numPlayers); // Call existing startGame method
+    }
+
+    private void showSettings() {
+        VBox settingsRoot = new VBox(20);
+
+        Button resumeButton = new Button("Resume");
+        addHoverStyle(resumeButton); 
+        resumeButton.setOnAction(e -> primaryStage.setScene(gameScene));
+
+        Button returnToMainMenuButton = new Button("Return to Main Menu");
+        addHoverStyle(returnToMainMenuButton);
+        returnToMainMenuButton.setOnAction(e -> primaryStage.setScene(startScene));
+
+        Button quitButton = new Button("Quit");
+        addHoverStyle(quitButton);
+        quitButton.setOnAction(e -> quitGame());
+
+        settingsRoot.getChildren().addAll(resumeButton, returnToMainMenuButton, quitButton);
+
+        Scene settingsScene = new Scene(settingsRoot, 400, 300);
+        addStylesheet(settingsScene);
+        primaryStage.setFullScreen(true);
+        primaryStage.setScene(settingsScene);
+    }
+
+    private void createGameScene(int numPlayers) {
+        VBox gameRoot = new VBox(20);
+
+        // Set up the game UI components
+        gameTable = new Pane();
+        gameTable.setPrefSize(1300, 700);
+
+        levelLabel = new Label();
+        livesLabel = new Label("Lives: " + numPlayers);
+
+        // Create buttons (throwing star, play, skip, next, settings)
+        throwingStarButton = new Button("Throwing Star");
+        addHoverStyle(throwingStarButton);
+        throwingStarButton.setOnAction(e -> useThrowingStar());
+
+        throwingStarsLabel = new Label("Throwing Stars: 3");
+
+        cardSelectComboBox = new ComboBox<>();
+
+        Button playCardButton = new Button("Play Card");
+        addHoverStyle(playCardButton); 
+        //playCardButton.setOnAction(e -> playCard());
+        playCardButton.setVisible(false); // Hide this button since we will use card click to play
+
+        Button skipTurnButton = new Button("Skip Turn");
+        addHoverStyle(skipTurnButton);
+        skipTurnButton.setOnAction(e -> skipTurn());
+
+        nextLevelButton = new Button("Next Level");
+        addHoverStyle(nextLevelButton);
+        nextLevelButton.setVisible(false); // Initially hidden
+        nextLevelButton.setOnAction(e -> nextLevel());
+
+        // Settings button
+        Button settingsButton = new Button("Settings");
+        addHoverStyle(settingsButton);
+        settingsButton.setOnAction(e -> showSettings());
+
+        // Add components to the game root
+        gameRoot.getChildren().addAll(levelLabel, livesLabel, throwingStarsLabel, playCardButton, skipTurnButton, throwingStarButton, nextLevelButton, settingsButton, gameTable);
+        //gameRoot.getStyleClass().add("scene-background");
+
+        gameScene = new Scene(gameRoot, 1500, 900);
+        addStylesheet(gameScene);
+    }
 
     //EVENTS------------------------------------------------------------------------------------
     private void startGame(int numPlayers) {
@@ -130,14 +207,13 @@ public class GameClient extends Application {
         displayHands(); //Display all hands on console (just for testing)
     }
     
-    private void playCard() {
-        Integer selectedCard = cardSelectComboBox.getValue();
+    private void playCard(Integer selectedCard) {
         if (selectedCard != null) {
             // Remove the card from the player's hand
             humanPlayer.getHand().remove(selectedCard);
             displayPlayedCard(selectedCard); // Display card in center of table
             removePlayerCard(selectedCard);
-            
+    
             lastPlayedCard = selectedCard;
     
             // Check if any player (including bots) has a smaller card in their hand and deduct a life
@@ -149,12 +225,12 @@ public class GameClient extends Application {
             }
     
             updateCardSelection();
-            
+    
             if (humanPlayer.getHand().isEmpty()) {
                 new Timeline(new KeyFrame(Duration.seconds(3), evv -> continueBotTurns())).play();
             }
         }
-    }
+    }    
     
     private void skipTurn() {
         System.out.println("Skipping turn!");
@@ -169,22 +245,46 @@ public class GameClient extends Application {
             System.out.println("No throwing stars left!");
         }
     }    
+
+    private void quitGame(){
+        System.exit(0);
+    }
     //EVENTS------------------------------------------------------------------------------------
 
     //UTILITIES---------------------------------------------------------------------------------
     
+    // CSS Styling-------------------------------------------------------------------------------------------
+    private void addHoverStyle(Button button) {
+        button.getStyleClass().add("button-hover");
+    }
+    
+    private void addStylesheet(Scene scene) {
+        scene.getStylesheets().add(getClass().getResource("/application/styles.css").toExternalForm());
+    }
+    // CSS Styling-------------------------------------------------------------------------------------------
+
     //DRAWING----------------------------------------------------------------------------------------------------------------------------------------------------------
     private void drawGameTableAndPlayer(int numPlayers) {
+        // Clear previous elements
+        gameTable.getChildren().clear();
+    
         // Draw table
         double rectangleWidth = 900;
         double rectangleHeight = 500;
-        Rectangle centerRectangle = new Rectangle((1500 - rectangleWidth) / 2, (900 - rectangleHeight) / 2, rectangleWidth, rectangleHeight);
+        double screenWidth = primaryStage.getWidth();
+        double screenHeight = primaryStage.getHeight();
+    
+        // Adjust the centerY to move everything upwards
+        double adjustedCenterY = screenHeight / 3; // Adjust this value to move the elements upwards
+    
+        // Center the rectangle
+        Rectangle centerRectangle = new Rectangle((screenWidth - rectangleWidth) / 2, adjustedCenterY - (rectangleHeight / 2), rectangleWidth, rectangleHeight);
         centerRectangle.setFill(Color.GREEN);
         gameTable.getChildren().add(centerRectangle);
     
         // Draw players
-        centerX = 1500 / 2;
-        centerY = 900 / 2;
+        centerX = screenWidth / 2;
+        centerY = adjustedCenterY;
         double radius = 320.0;
     
         for (int playerIndex = 0; playerIndex < numPlayers; ++playerIndex) {
@@ -199,27 +299,24 @@ public class GameClient extends Application {
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() - 170, "player", i, currentPlayer);
                 }
-            } 
-            else if (playerIndex == 1) {
+            } else if (playerIndex == 1) {
                 drawPlayers(centerX, centerY - (radius + 20));
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() + 120, "bot", i, currentPlayer);
                 }
-            } 
-            else if (playerIndex == 2) {
+            } else if (playerIndex == 2) {
                 drawPlayers(centerX - (radius + 250), centerY);
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(50, 30, playerCircle.getCenterX() + 150, centerY - totalWidth / 2 + i * 35, "bot", i, currentPlayer);
                 }
-            }
-            else if (playerIndex == 3) {
+            } else if (playerIndex == 3) {
                 drawPlayers(centerX + (radius + 250), centerY);
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(50, 30, playerCircle.getCenterX() - 200, centerY - totalWidth / 2 + i * 35, "bot", i, currentPlayer);
                 }
             }
         }
-    }
+    }    
     
     private void drawPlayers(double circleX, double circleY) {
         playerCircle.setCenterX(circleX);
@@ -231,17 +328,16 @@ public class GameClient extends Application {
         Rectangle cardRect = new Rectangle(cardX, cardY, Color.LIGHTGREY);
         cardRect.setStroke(Color.BLACK);
         // Center the cards
-        cardRect.setX(centerX); 
+        cardRect.setX(centerX);
         cardRect.setY(centerY);
     
         Integer cardValue = currentPlayer.getHand().get(card_ith);
     
         if (category.equals("bot")) {
             gameTable.getChildren().add(cardRect);
-            //Save coordinates of the bots's cards
+            // Save coordinates of the bots' cards
             botCards.put(cardValue, cardRect);
-        } 
-        else {
+        } else {
             Label cardLabel = new Label(cardValue.toString());
             cardLabel.setLayoutX(cardRect.getX() + 10);
             cardLabel.setLayoutY(cardRect.getY() + 15);
@@ -249,8 +345,33 @@ public class GameClient extends Application {
             // Save the coordinates of the player's cards
             playerCard.put(cardValue, cardRect);
             playerCardLabel.put(cardValue, cardLabel);
+
+            // Add event handlers to change cursor and move card up on hover
+            cardRect.setOnMouseEntered(e -> {
+                cardRect.getStyleClass().add("card-hover");
+                cardRect.getStyleClass().add("card-selected");
+                cardLabel.getStyleClass().add("card-selected");
+            });
+            cardRect.setOnMouseExited(e -> {
+                cardRect.getStyleClass().remove("card-hover");
+                cardRect.getStyleClass().remove("card-selected");
+                cardLabel.getStyleClass().remove("card-selected");
+            });
+            cardLabel.setOnMouseEntered(e -> {
+                cardLabel.getStyleClass().add("card-hover");
+                cardRect.getStyleClass().add("card-selected");
+                cardLabel.getStyleClass().add("card-selected");
+            });
+            cardLabel.setOnMouseExited(e -> {
+                cardLabel.getStyleClass().remove("card-hover");
+                cardRect.getStyleClass().remove("card-selected");
+                cardLabel.getStyleClass().remove("card-selected");
+            });
+            // Add event handler to play card on click
+            cardRect.setOnMouseClicked(e -> playCard(cardValue));
+            cardLabel.setOnMouseClicked(e -> playCard(cardValue));
         }
-    }
+    }    
     //DRAWING----------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //REMOVING----------------------------------------------------------------------------------------------------------------
@@ -415,7 +536,6 @@ public class GameClient extends Application {
         botCards.remove(cardValue);
     }    
     //DISPLAYING---------------------------------------------------------------------------------
-
 
     private void proceedToNextTurn() {
         if (currentPlayerIndex == 0) {
