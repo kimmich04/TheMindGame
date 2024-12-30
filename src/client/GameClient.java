@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -14,6 +15,7 @@ import javafx.stage.Stage;
 import javafx.scene.image.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
@@ -45,19 +47,21 @@ public class GameClient extends Application {
     private Map<Integer, Label> playerCardLabel = new HashMap<>(); // To store card labels
     private Map<Integer, Rectangle> botCards = new HashMap<>(); // To store bot cards
     private Map<Integer, Label> revealedCardLabels = new HashMap<>(); // Store labels for easy removal
-    private Label livesLabel;
-    private Button throwingStarButton; 
+    private Label livesLabel, starsLabel;
+    private Button throwingStarButton, skipTurnButton; 
     private Label throwingStarsLabel; 
+    private Image heartImage, throwingStarImage;
 
     private Scene startScene, playerSelectScene, gameScene;
     private Stage primaryStage;
-
+    
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         createStartScene();
         createPlayerSelectScene();
-
+        heartImage = new Image(getClass().getResource("/images/lives.png").toExternalForm());
+        throwingStarImage = new Image(getClass().getResource("/images/throwingStar.png").toExternalForm());
         primaryStage.setTitle("The Mind Game");
         primaryStage.setScene(startScene);
         Image icon = new Image(getClass().getResource("/images/TheMind_Logo.png").toString());
@@ -153,12 +157,7 @@ public class GameClient extends Application {
 
         cardSelectComboBox = new ComboBox<>();
 
-        Button playCardButton = new Button("Play Card");
-        addHoverStyle(playCardButton); 
-        //playCardButton.setOnAction(e -> playCard());
-        playCardButton.setVisible(false); // Hide this button since we will use card click to play
-
-        Button skipTurnButton = new Button("Skip Turn");
+        skipTurnButton = new Button("Skip Turn");
         addHoverStyle(skipTurnButton);
         skipTurnButton.setOnAction(e -> skipTurn());
 
@@ -173,7 +172,7 @@ public class GameClient extends Application {
         settingsButton.setOnAction(e -> showSettings());
 
         // Add components to the game root
-        gameRoot.getChildren().addAll(levelLabel, livesLabel, throwingStarsLabel, playCardButton, skipTurnButton, throwingStarButton, nextLevelButton, settingsButton, gameTable);
+        gameRoot.getChildren().addAll(levelLabel, livesLabel, throwingStarsLabel, skipTurnButton, throwingStarButton, nextLevelButton, settingsButton, gameTable);
         //gameRoot.getStyleClass().add("scene-background");
 
         gameScene = new Scene(gameRoot, 1500, 900);
@@ -209,31 +208,50 @@ public class GameClient extends Application {
     
     private void playCard(Integer selectedCard) {
         if (selectedCard != null) {
-            // Remove the card from the player's hand
-            humanPlayer.getHand().remove(selectedCard);
-            displayPlayedCard(selectedCard); // Display card in center of table
-            removePlayerCard(selectedCard);
-    
-            lastPlayedCard = selectedCard;
-    
-            // Check if any player (including bots) has a smaller card in their hand and deduct a life
-            boolean smallerCardsExist = removeAllSmallerCards(selectedCard);
-            if (smallerCardsExist) {
-                game.decreaseLives();
-                System.out.println("You lost a life! Lives remaining: " + game.getLives());
-                updateLivesDisplay();
-            }
-    
-            updateCardSelection();
-    
-            if (humanPlayer.getHand().isEmpty()) {
-                new Timeline(new KeyFrame(Duration.seconds(3), evv -> continueBotTurns())).play();
-            }
+            // Get the card and its label from the player's hand
+            Rectangle cardRect = playerCard.get(selectedCard);
+            Label cardLabel = playerCardLabel.get(selectedCard);
+
+            // Create a new TranslateTransition for the card animation
+            TranslateTransition transition = new TranslateTransition(Duration.seconds(1), cardRect);
+            transition.setToX(centerX - cardRect.getX());
+            transition.setToY(centerY - cardRect.getY());
+            transition.setOnFinished(event -> {
+                // Remove the card from the player's hand
+                humanPlayer.getHand().remove(selectedCard);
+                displayPlayedCard(selectedCard); // Display card in center of table
+                removePlayerCard(selectedCard);
+                lastPlayedCard = selectedCard;
+
+                // Check if any player (including bots) has a smaller card in their hand and deduct a life
+                boolean smallerCardsExist = removeAllSmallerCards(selectedCard);
+                if (smallerCardsExist) {
+                    game.decreaseLives();
+                    System.out.println("You lost a life! Lives remaining: " + game.getLives());
+                    updateLivesDisplay();
+                }
+                updateCardSelection();
+
+                if (humanPlayer.getHand().isEmpty()) {
+                    new Timeline(new KeyFrame(Duration.seconds(3), evv -> continueBotTurns())).play();
+                }
+            });
+
+            // Play the transition
+            transition.play();
+
+            // Create a similar transition for the label
+            TranslateTransition labelTransition = new TranslateTransition(Duration.seconds(1), cardLabel);
+            labelTransition.setToX(centerX - cardLabel.getLayoutX());
+            labelTransition.setToY(centerY - cardLabel.getLayoutY());
+            labelTransition.play();
+
         }
-    }    
+    }
     
     private void skipTurn() {
         System.out.println("Skipping turn!");
+        skipTurnButton.setVisible(false);
         proceedToNextTurn();
     }
 
@@ -241,6 +259,13 @@ public class GameClient extends Application {
         if (game.useThrowingStar()) {
             revealSmallestCards();
             updateThrowingStarsDisplay();
+            throwingStarButton.setVisible(false);
+
+            if (checkLevelComplete()) {
+                System.out.println("Level complete");
+                nextLevelButton.setVisible(true);
+                return;
+        }
         } else {
             System.out.println("No throwing stars left!");
         }
@@ -345,7 +370,7 @@ public class GameClient extends Application {
             // Save the coordinates of the player's cards
             playerCard.put(cardValue, cardRect);
             playerCardLabel.put(cardValue, cardLabel);
-
+    
             // Add event handlers to change cursor and move card up on hover
             cardRect.setOnMouseEntered(e -> {
                 cardRect.getStyleClass().add("card-hover");
@@ -371,7 +396,8 @@ public class GameClient extends Application {
             cardRect.setOnMouseClicked(e -> playCard(cardValue));
             cardLabel.setOnMouseClicked(e -> playCard(cardValue));
         }
-    }    
+    }
+        
     //DRAWING----------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //REMOVING----------------------------------------------------------------------------------------------------------------
@@ -448,8 +474,24 @@ public class GameClient extends Application {
         levelLabel.setText("Level: " + game.getCurrentLevel());
     }
     
-    private void updateLivesDisplay() { 
-        livesLabel.setText("Lives: " + game.getLives()); 
+    private void updateLivesDisplay() {
+        // Clear any existing heart images
+        livesLabel.setGraphic(null);
+        livesLabel.setText("");
+
+        // Create an HBox to hold the hearts
+        HBox heartBox = new HBox(5); // 5 is the spacing between hearts
+
+        // Add heart images based on the number of lives
+        for (int i = 0; i < game.getLives(); i++) {
+            ImageView heartView = new ImageView(heartImage);
+            heartView.setFitWidth(30); // Adjust the width as needed
+            heartView.setFitHeight(30); // Adjust the height as needed
+            heartBox.getChildren().add(heartView);
+        }
+
+        // Set the HBox as the graphic for the lives label
+        livesLabel.setGraphic(heartBox);
     }
 
     private void updateCardSelection() {
@@ -460,8 +502,26 @@ public class GameClient extends Application {
     }
 
     private void updateThrowingStarsDisplay() {
-        throwingStarsLabel.setText("Throwing Stars: " + game.getThrowingStars());
-    }    
+        throwingStarButton.setVisible(true);
+        // Clear any existing star images
+        throwingStarsLabel.setGraphic(null);
+        throwingStarsLabel.setText("");
+    
+        // Create an HBox to hold the throwing stars
+        HBox starBox = new HBox(5); // 5 is the spacing between stars
+    
+        // Add star images based on the number of throwing stars
+        for (int i = 0; i < game.getThrowingStars(); i++) {
+            ImageView starView = new ImageView(throwingStarImage);
+            starView.setFitWidth(30); // Adjust the width as needed
+            starView.setFitHeight(30); // Adjust the height as needed
+            starBox.getChildren().add(starView);
+        }
+    
+        // Set the HBox as the graphic for the throwing stars label
+        throwingStarsLabel.setGraphic(starBox);
+    }
+        
     //UPDATING-----------------------------------------------------------
 
     //DISPLAYING---------------------------------------------------------------------------------
@@ -493,18 +553,32 @@ public class GameClient extends Application {
                 }
             }
         }
-
-         // Remove the card from the player's hand 
-        List <Integer> humanHand = humanPlayer.getHand();
-        if (!humanHand.isEmpty()){
+    
+        // Remove the card from the human player's hand and disable events
+        List<Integer> humanHand = humanPlayer.getHand();
+        if (!humanHand.isEmpty()) {
             Integer smallestHumanCard = Collections.min(humanHand);
+    
+            // Disable cursor and moving events on the smallest human card
+            if (playerCard.containsKey(smallestHumanCard)) {
+                Rectangle cardRect = playerCard.get(smallestHumanCard);
+                Label cardLabel = playerCardLabel.get(smallestHumanCard);
+                cardRect.setOnMouseEntered(null);
+                cardRect.setOnMouseExited(null);
+                cardRect.setOnMouseClicked(null);
+                cardLabel.setOnMouseEntered(null);
+                cardLabel.setOnMouseExited(null);
+                cardLabel.setOnMouseClicked(null);
+            }
+    
+            // Remove the smallest card from the human player's hand
             humanHand.remove(smallestHumanCard);
         }
     }
     
     private void revealCardNumberAtPosition(Integer cardValue, Player player) {
         // Find the index of the card in the bot's hand
-        int cardIndex = player.getHand().indexOf(cardValue);
+        //int cardIndex = player.getHand().indexOf(cardValue);
     
         // Retrieve the corresponding rectangle
         Rectangle cardRect = botCards.get(cardValue);
@@ -554,7 +628,7 @@ public class GameClient extends Application {
             new Timeline(new KeyFrame(Duration.seconds(3), ev -> continueBotTurns())).play();
             return;
         }
-    
+
         if (currentPlayerIndex == 0) {
             System.out.println("Your turn! Current hand: " + humanPlayer.getHand());
         } else {
@@ -563,9 +637,10 @@ public class GameClient extends Application {
                 System.out.println("Your turn! Current hand: " + humanPlayer.getHand());
             } else {
                 Timeline botTurnTimeline = new Timeline(new KeyFrame(Duration.seconds(3), ev -> {
+                    skipTurnButton.setVisible(true);
+
                     Integer cardToPlay = ((BotPlayer) currentPlayer).playCardAfter(lastPlayedCard);
                     lastPlayedCard = cardToPlay;
-    
                     // Check if any player (including bots) has a smaller card in their hand and deduct a life
                     boolean smallerCardsExist = removeAllSmallerCards(cardToPlay);
                     if (smallerCardsExist) {
