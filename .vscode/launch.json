@@ -6,9 +6,9 @@
   "configurations": [
     {
       "type": "java",
-      "name": "GameClient",
+      "name": "Main",
       "request": "launch",
-      "mainClass": "client.GameClient",
+      "mainClass": "client.Main",
       "projectName": "TheMindGame_4228a81e",
       "vmArgs": "--module-path \"C:/Users/Admin/Desktop/javafx-sdk-23.0.1/lib\" --add-modules javafx.controls,javafx.fxml"
     },
@@ -29,9 +29,9 @@
     },
     {
       "type": "java",
-      "name": "GameClient",
+      "name": "Main",
       "request": "launch",
-      "mainClass": "client.GameClient",
+      "mainClass": "client.Main",
       "projectName": "TheMindGame_4228a81e",
       "vmArgs": "--module-path \"C:/Users/Admin/Desktop/javafx-sdk-23.0.1/lib\" --add-modules javafx.controls,javafx.fxml"
     }
