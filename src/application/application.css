@@ -1,0 +1,66 @@
+
+.card-hover {
+  -fx-cursor: hand; /* Change the cursor to a pointer */
+}
+
+.card-selected {
+  -fx-translate-y: -10px; /* Move the card up by 10 pixels */
+}
+
+.button-hover {
+  -fx-cursor: hand; /* Change the cursor to a pointer */
+}
+
+.scene-background {
+  -fx-background-color: #A52A2A; /* Red-brown color */
+}
+
+/* .start-background {
+	-fx-background-image: url("/images/startBackground.png");
+    -fx-background-size: cover;
+    -fx-background-position: center center;
+}
+*/
+
+/* Add your styles for buttons in the CSS file */
+.transparent-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-font-weight: bold;
+}
+
+.cursor-entered {
+	-fx-text-fill: red;
+}
+
+.center-left-alignment {
+    -fx-alignment: center-left;
+    -fx-padding: 30px 0 0 20px; /* Adjust this padding to move the buttons to the desired position */
+}
+
+.level-label {
+	-fx-font-family: "Press Start 2P";  /* Font family */
+    -fx-font-size: 33px;       /* Font size */
+    -fx-font-weight: bold;     /* Font weight */
+    -fx-text-fill: #FFFFFF;    /* Font color */
+}
+
+.game-button {
+	-fx-pref-width: 150px;       /* Set preferred width */
+    -fx-pref-height: 40px;       /* Set preferred height */
+    -fx-font-size: 16px;
+    -fx-background-color: transparent;         /* Set font size */
+}
+
+.game-button .text{
+	-fx-font-size: 20px;
+	-fx-fill: white;
+	-fx-font-family: "Berlin-sans-fb-demi-bold";
+	
+}
+
+.game-label {
+	-fx-pref-width: 200px;
+    -fx-pref-height: 40px;
+}

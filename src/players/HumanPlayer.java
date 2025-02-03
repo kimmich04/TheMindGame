@@ -9,3 +9,4 @@ public class HumanPlayer extends Player {
     public void playCard() {
     }
 }
+

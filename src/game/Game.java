@@ -1,14 +1,17 @@
 package game;
 
-import players.BotPlayer;
-import players.HumanPlayer;
-import players.Player;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import javafx.scene.control.Button;
+import players.Player;
+import players.HumanPlayer;
+import players.BotPlayer;
+
 
 public class Game {
-    private List<Player> players;
+	private List<Player> players;
     private int currentLevel;
     private int maxLevel;
     private int lives;
@@ -20,7 +23,7 @@ public class Game {
         players = new ArrayList<>();
         players.add(new HumanPlayer("Player"));
         for (int i = 0; i < numPlayers - 1; i++) {
-            players.add(new BotPlayer("Bot " + (i + 1)));
+        	players.add(new BotPlayer("Bot " + (i + 1)));
         }
         currentLevel = 1;
         this.nextLevelButton = nextLevelButton;
@@ -62,6 +65,12 @@ public class Game {
         return lives <= 0;
     }
 
+    public boolean isGameCompleted() {
+		if (currentLevel > maxLevel)
+			return true;
+		return false;
+	}
+    
     public void startLevel() {
         nextLevelButton.setVisible(false);
         dealCards(currentLevel);
@@ -90,13 +99,12 @@ public class Game {
         }
     }
     
-
     public int getCurrentLevel() {
         return currentLevel;
     }
 
     public void nextLevel() {
-        if (currentLevel < maxLevel) {
+        if (currentLevel <= maxLevel) {
             currentLevel++;
             startLevel();
         } 
@@ -120,4 +128,5 @@ public class Game {
         }
         return null;
     }
+
 }

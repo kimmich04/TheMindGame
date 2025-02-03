@@ -1,22 +1,31 @@
 package client;
 
 import javafx.application.Application;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.scene.image.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.util.Duration;
+import javafx.geometry.Insets;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +40,7 @@ import players.BotPlayer;
 import players.HumanPlayer;
 import players.Player;
 
-public class GameClient extends Application {
+public class Main extends Application {
     private Game game;
     private Pane gameTable;
     private Label levelLabel;
@@ -47,64 +56,81 @@ public class GameClient extends Application {
     private Map<Integer, Label> playerCardLabel = new HashMap<>(); // To store card labels
     private Map<Integer, Rectangle> botCards = new HashMap<>(); // To store bot cards
     private Map<Integer, Label> revealedCardLabels = new HashMap<>(); // Store labels for easy removal
-    private Label livesLabel, starsLabel;
+    private Label livesLabel, starsLabel, throwingStarsLabel, countdownLabel;
     private Button throwingStarButton, skipTurnButton; 
-    private Label throwingStarsLabel; 
     private Image heartImage, throwingStarImage;
 
-    private Scene startScene, playerSelectScene, gameScene;
+    private Scene startScene, playerSelectScene, gameScene, gameOverScene, gameCompletedScene;
     private Stage primaryStage;
-    
+    private static final String BACKGROUND_IMAGE_PATH = "/images/startBackground.jpg"; // Define the background image path
+
     @Override
     public void start(Stage primaryStage) {
+        try {
         this.primaryStage = primaryStage;
+        
         createStartScene();
         createPlayerSelectScene();
         heartImage = new Image(getClass().getResource("/images/lives.png").toExternalForm());
         throwingStarImage = new Image(getClass().getResource("/images/throwingStar.png").toExternalForm());
         primaryStage.setTitle("The Mind Game");
         primaryStage.setScene(startScene);
+        primaryStage.setResizable(false);
         Image icon = new Image(getClass().getResource("/images/TheMind_Logo.png").toString());
         primaryStage.getIcons().add(icon);
-        primaryStage.getScene().getStylesheets().add(getClass().getResource("/application/styles.css").toExternalForm()); // Apply CSS file
+        primaryStage.getScene().getStylesheets().add(getClass().getResource("/application/application.css").toExternalForm()); // Apply CSS file
         primaryStage.show();
+        }
+        catch(Exception e) {
+			e.printStackTrace();
+		}
     }
 
     private void createStartScene() {
         VBox startRoot = new VBox(20);
-
+        
+        // Insert background image startBackground.png
+        setBackground(startRoot);
+        startRoot.setAlignment(Pos.CENTER_LEFT);
+        
         Button startButton = new Button("Start Game");
-        addHoverStyle(startButton);
+        addHoverEffect(startButton);
         startButton.setOnAction(e -> primaryStage.setScene(playerSelectScene));
-
         Button quitButton = new Button("Quit");
-        addHoverStyle(quitButton);
+        addHoverEffect(quitButton);
         quitButton.setOnAction(e -> quitGame());
-
+        
         startRoot.getChildren().addAll(startButton, quitButton);
 
-        startScene = new Scene(startRoot, 400, 300);
+        startScene = new Scene(startRoot, 300, 400);
         addStylesheet(startScene);
     }
 
     private void createPlayerSelectScene() {
         VBox playerSelectRoot = new VBox(20);
-
+        
+        setBackground(playerSelectRoot);
+        playerSelectRoot.setAlignment(Pos.CENTER_LEFT); // Align the VBox to center-left
+        
         Button twoPlayersButton = new Button("2 Players");
-        addHoverStyle(twoPlayersButton);
         twoPlayersButton.setOnAction(e -> switchToGameScene(2));
+        addHoverEffect(twoPlayersButton);
 
         Button threePlayersButton = new Button("3 Players");
-        addHoverStyle(threePlayersButton);
         threePlayersButton.setOnAction(e -> switchToGameScene(3));
+        addHoverEffect(threePlayersButton);
 
         Button fourPlayersButton = new Button("4 Players");
-        addHoverStyle(fourPlayersButton);
         fourPlayersButton.setOnAction(e -> switchToGameScene(4));
+        addHoverEffect(fourPlayersButton);
 
-        playerSelectRoot.getChildren().addAll(twoPlayersButton, threePlayersButton, fourPlayersButton);
-
-        playerSelectScene = new Scene(playerSelectRoot, 400, 300);
+        Button returnToMainMenuButton = new Button("Main Menu");
+        addHoverEffect(returnToMainMenuButton);
+        returnToMainMenuButton.setOnAction(e -> primaryStage.setScene(startScene));
+        
+        playerSelectRoot.getChildren().addAll(twoPlayersButton, threePlayersButton, fourPlayersButton, returnToMainMenuButton);
+        
+        playerSelectScene = new Scene(playerSelectRoot, 300, 400);
         addStylesheet(playerSelectScene);
     }
 
@@ -117,66 +143,166 @@ public class GameClient extends Application {
 
     private void showSettings() {
         VBox settingsRoot = new VBox(20);
-
+        
+        setBackground(settingsRoot);
+        settingsRoot.setAlignment(Pos.CENTER_LEFT); // Align the VBox to center-left
+        
         Button resumeButton = new Button("Resume");
-        addHoverStyle(resumeButton); 
-        resumeButton.setOnAction(e -> primaryStage.setScene(gameScene));
-
-        Button returnToMainMenuButton = new Button("Return to Main Menu");
-        addHoverStyle(returnToMainMenuButton);
+        addHoverEffect(resumeButton);
+        resumeButton.setOnAction(e -> {
+            primaryStage.setScene(gameScene);
+            primaryStage.setFullScreen(true); // Set the stage to full screen
+        });
+        
+        Button returnToMainMenuButton = new Button("Main Menu");
+        addHoverEffect(returnToMainMenuButton);
         returnToMainMenuButton.setOnAction(e -> primaryStage.setScene(startScene));
 
         Button quitButton = new Button("Quit");
-        addHoverStyle(quitButton);
+        addHoverEffect(quitButton);
         quitButton.setOnAction(e -> quitGame());
 
         settingsRoot.getChildren().addAll(resumeButton, returnToMainMenuButton, quitButton);
 
-        Scene settingsScene = new Scene(settingsRoot, 400, 300);
+        Scene settingsScene = new Scene(settingsRoot, 300, 400);
         addStylesheet(settingsScene);
         primaryStage.setFullScreen(true);
         primaryStage.setScene(settingsScene);
     }
 
+
     private void createGameScene(int numPlayers) {
-        VBox gameRoot = new VBox(20);
+        // Create the main BorderPane container
+        BorderPane gameRoot = new BorderPane();
+        gameRoot.setStyle("-fx-background-color: #151515 ;"); 
+        
+        // Top region for the level label
+        VBox levelRoot = new VBox();
+        levelRoot.setAlignment(Pos.TOP_CENTER);
+
+        // Left region for the lives, throwing stars, and buttons
+        VBox buttonRoot = new VBox(20);
+        buttonRoot.setAlignment(Pos.CENTER_LEFT); // Align the VBox's children to the left
 
         // Set up the game UI components
         gameTable = new Pane();
         gameTable.setPrefSize(1300, 700);
 
         levelLabel = new Label();
-        livesLabel = new Label("Lives: " + numPlayers);
+        levelLabel.getStyleClass().add("level-label");
 
-        // Create buttons (throwing star, play, skip, next, settings)
+        livesLabel = new Label("Lives: " + numPlayers);
+        livesLabel.getStyleClass().add("game-label");
+
+        // Create buttons (Throwing Star, Skip Turn, Next Level, Settings)
         throwingStarButton = new Button("Throwing Star");
-        addHoverStyle(throwingStarButton);
+        addHoverEffect(throwingStarButton);
+        throwingStarButton.getStyleClass().add("game-button");
+        throwingStarButton.setStyle("-fx-pref-width: 200px;");
         throwingStarButton.setOnAction(e -> useThrowingStar());
 
         throwingStarsLabel = new Label("Throwing Stars: 3");
-
+        throwingStarsLabel.getStyleClass().add("game-label");
         cardSelectComboBox = new ComboBox<>();
 
         skipTurnButton = new Button("Skip Turn");
-        addHoverStyle(skipTurnButton);
+        addHoverEffect(skipTurnButton);
+        skipTurnButton.getStyleClass().add("game-button");
         skipTurnButton.setOnAction(e -> skipTurn());
 
         nextLevelButton = new Button("Next Level");
-        addHoverStyle(nextLevelButton);
+        addHoverEffect(nextLevelButton);
+        nextLevelButton.getStyleClass().add("game-button");
         nextLevelButton.setVisible(false); // Initially hidden
         nextLevelButton.setOnAction(e -> nextLevel());
 
         // Settings button
         Button settingsButton = new Button("Settings");
-        addHoverStyle(settingsButton);
+        addHoverEffect(settingsButton);
+        settingsButton.getStyleClass().add("game-button");
         settingsButton.setOnAction(e -> showSettings());
 
-        // Add components to the game root
-        gameRoot.getChildren().addAll(levelLabel, livesLabel, throwingStarsLabel, skipTurnButton, throwingStarButton, nextLevelButton, settingsButton, gameTable);
-        //gameRoot.getStyleClass().add("scene-background");
+        // Add components to their respective containers
+        levelRoot.getChildren().add(levelLabel);
+        buttonRoot.getChildren().addAll(livesLabel, throwingStarsLabel, skipTurnButton, throwingStarButton, nextLevelButton, settingsButton);
+        
+        // Set the layout regions:
+        gameRoot.setTop(levelRoot);
+        gameRoot.setLeft(buttonRoot); // Changed from setRight to setLeft
+        gameRoot.setBottom(gameTable);
 
         gameScene = new Scene(gameRoot, 1500, 900);
         addStylesheet(gameScene);
+    }
+
+    private void createGameOverScene() {
+        BorderPane gameOverRoot = new BorderPane();
+        gameOverRoot.setStyle("-fx-background-color: #151515;");
+
+        VBox centerBox = new VBox(20);
+        centerBox.setAlignment(Pos.CENTER);
+
+        Label gameOverLabel = new Label("Game Over");
+        gameOverLabel.setStyle("-fx-font-size: 60px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        Button restartButton = new Button("Restart");
+        addHoverEffect(restartButton);
+        restartButton.getStyleClass().add("game-button");
+        restartButton.setOnAction(e -> primaryStage.setScene(playerSelectScene));
+
+        Button exitButton = new Button("Exit");
+        addHoverEffect(exitButton);
+        exitButton.getStyleClass().add("game-button");
+        exitButton.setOnAction(e -> quitGame());
+
+        centerBox.getChildren().addAll(gameOverLabel, restartButton, exitButton);
+        gameOverRoot.setCenter(centerBox);
+
+        gameOverScene = new Scene(gameOverRoot, 1500, 900);
+        addStylesheet(gameOverScene);
+    }
+
+    private void createGameCompletedScene() {
+        BorderPane gameCompletedRoot = new BorderPane();
+        gameCompletedRoot.setStyle("-fx-background-color: #151515;");
+
+        VBox centerBox = new VBox(20);
+        centerBox.setAlignment(Pos.CENTER);
+
+        Label completedLabel = new Label("Congratulations! You completed the game!");
+        completedLabel.setStyle("-fx-font-size: 60px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        Button mainMenuButton = new Button("Main Menu");
+        addHoverEffect(mainMenuButton);
+        mainMenuButton.getStyleClass().add("game-button");
+        mainMenuButton.setOnAction(e -> primaryStage.setScene(startScene));
+
+        Button exitButton = new Button("Exit");
+        addHoverEffect(exitButton);
+        exitButton.getStyleClass().add("game-button");
+        exitButton.setOnAction(e -> quitGame());
+
+        centerBox.getChildren().addAll(completedLabel, mainMenuButton, exitButton);
+        gameCompletedRoot.setCenter(centerBox);
+
+        gameCompletedScene = new Scene(gameCompletedRoot, 1500, 900);
+        addStylesheet(gameCompletedScene);
+    }
+
+    private void switchToGameOverScene() {
+        createGameOverScene();
+        Stage stage = (Stage) nextLevelButton.getScene().getWindow();
+        stage.setScene(gameOverScene);
+        stage.setFullScreen(true); // Set full screen
+        stage.show();
+    }
+
+    private void switchToGameCompletedScene() {
+        createGameCompletedScene();
+        Stage stage = (Stage) nextLevelButton.getScene().getWindow();
+        stage.setScene(gameCompletedScene);
+        stage.setFullScreen(true); // Ensure full-screen mode
+        stage.show();
     }
 
     //EVENTS------------------------------------------------------------------------------------
@@ -194,6 +320,10 @@ public class GameClient extends Application {
     }
     
     private void nextLevel() {
+    	if (game.isGameCompleted()) {
+            switchToGameCompletedScene();
+            return;
+        }
         game.nextLevel();
         game.startLevel();
         drawGameTableAndPlayer(game.getPlayers().size());
@@ -279,12 +409,33 @@ public class GameClient extends Application {
     //UTILITIES---------------------------------------------------------------------------------
     
     // CSS Styling-------------------------------------------------------------------------------------------
-    private void addHoverStyle(Button button) {
-        button.getStyleClass().add("button-hover");
+    // Create a reusable method to apply hover effects
+    private void addHoverEffect(Button button) {
+        button.setOnMouseEntered(e -> {
+            button.getStyleClass().add("card-hover");
+            button.getStyleClass().add("cursor-entered");
+        });
+        button.setOnMouseExited(e -> {
+            button.getStyleClass().remove("card-hover");
+            button.getStyleClass().remove("cursor-entered");
+        });
+        button.getStyleClass().add("transparent-button");
+        button.getStyleClass().add("center-left-alignment");
     }
     
     private void addStylesheet(Scene scene) {
-        scene.getStylesheets().add(getClass().getResource("/application/styles.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/application/application.css").toExternalForm());
+    }
+    
+    private void setBackground(Pane pane) {
+        BackgroundImage backgroundImage = new BackgroundImage(
+            new Image(getClass().getResource(BACKGROUND_IMAGE_PATH).toExternalForm()), // Path to your image
+            BackgroundRepeat.NO_REPEAT,
+            BackgroundRepeat.NO_REPEAT,
+            BackgroundPosition.CENTER,
+            new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, false)
+        );
+        pane.setBackground(new Background(backgroundImage));
     }
     // CSS Styling-------------------------------------------------------------------------------------------
 
@@ -320,6 +471,7 @@ public class GameClient extends Application {
     
             if (currentPlayer instanceof HumanPlayer) {
                 // Player
+                playerCircle.setFill(Color.web("#151515"));
                 drawPlayers(centerX, centerY + (radius + 20));
                 for (int i = 0; i < numCards; ++i) {
                     drawPlayersCard(30, 50, centerX - totalWidth / 2 + i * 35, playerCircle.getCenterY() - 170, "player", i, currentPlayer);
@@ -471,7 +623,7 @@ public class GameClient extends Application {
 
     //UPDATING-----------------------------------------------------------
     private void updateLevelDisplay() {
-        levelLabel.setText("Level: " + game.getCurrentLevel());
+        levelLabel.setText("LEVEL: " + game.getCurrentLevel());
     }
     
     private void updateLivesDisplay() {
@@ -610,7 +762,6 @@ public class GameClient extends Application {
         botCards.remove(cardValue);
     }    
     //DISPLAYING---------------------------------------------------------------------------------
-
     private void proceedToNextTurn() {
         if (currentPlayerIndex == 0) {
             sortBotsByNextPlayableCard();
@@ -654,12 +805,14 @@ public class GameClient extends Application {
     
                     if (game.isGameOver()) {
                         System.out.println("Game over! You have no lives left.");
+                        switchToGameOverScene();
                         return; // Exit the method to prevent further actions
                     }
     
                     if (checkLevelComplete()) {
                         System.out.println("Level complete");
                         nextLevelButton.setVisible(true);
+                        throwingStarButton.setVisible(false);
                         return;
                     }
     
@@ -692,6 +845,7 @@ public class GameClient extends Application {
         if (checkLevelComplete()) {
             System.out.println("Level complete");
             nextLevelButton.setVisible(true); // Show the "Next Level" button
+            throwingStarButton.setVisible(false);
             return;
         }
     
@@ -716,12 +870,14 @@ public class GameClient extends Application {
     
             if (game.isGameOver()) {
                 System.out.println("Game over! You have no lives left.");
+                switchToGameOverScene();
                 return; // Exit the method to prevent further actions
             }
     
             if (checkLevelComplete()) {
                 System.out.println("Level complete");
                 nextLevelButton.setVisible(true);
+                throwingStarButton.setVisible(false);
                 return;
             }
 

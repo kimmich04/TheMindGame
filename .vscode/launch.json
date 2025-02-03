@@ -6,6 +6,14 @@
   "configurations": [
     {
       "type": "java",
+      "name": "GameClient",
+      "request": "launch",
+      "mainClass": "client.GameClient",
+      "projectName": "TheMindGame_4228a81e",
+      "vmArgs": "--module-path \"C:/Users/Admin/Desktop/javafx-sdk-23.0.1/lib\" --add-modules javafx.controls,javafx.fxml"
+    },
+    {
+      "type": "java",
       "name": "Current File",
       "request": "launch",
       "mainClass": "${file}",
